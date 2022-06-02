@@ -2,7 +2,8 @@ import express from 'express'
 import { MongoClient } from 'mongodb'
 import chalk from 'chalk'
 
-import defineRoutes from './routes.js'
+import defineUserRoutes from './routes/userRoutes.js'
+import definePostRoutes from './routes/postRoutes.js'
 
 const PORT = 3000
 const dbHost = 'cluster0.ydwtqud.mongodb.net'
@@ -24,7 +25,8 @@ app.listen(PORT, () => {
             )
             const db = mongoClient.db(dbName)
 
-            defineRoutes(app, db)
+            defineUserRoutes(app, db)
+            definePostRoutes(app, db)
         })
         .catch(console.error)
 

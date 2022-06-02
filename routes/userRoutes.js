@@ -1,21 +1,83 @@
 import { ObjectId } from 'mongodb'
 import jwt from 'jsonwebtoken'
 
-export default function defineRoutes(app, db) {
-    app.post('/login', (req, res) => {
-        const { username } = req.body
+import passwordUtil from '../utils/passwordUtil.js'
+import createToken from '../utils/createToken.js'
+import withAuth from '../utils/withAuth.js'
 
-        // TODO: Implement Login
+export default function defineUserRoutes(app, db) {
+    const usersCollection = db.collection('users')
 
-        const token = jwt.sign({ username }, 'secretSae', { expiresIn: '1h' })
-        console.log(token)
+    app.post('/login', async (req, res) => {
+        const { username = '', password = '' } = req.body
+
+        if (username.length < 3 || password.length < 6) {
+            res.send({
+                success: false,
+                message: 'No credentials',
+            })
+            return
+        }
+
+        const user = await usersCollection.findOne({ username })
+
+        if (user && passwordUtil.compare(password, user.password)) {
+            const token = createToken({
+                id: user._id,
+                username: user.username,
+                role: user.role,
+            })
+
+            res.send({
+                success: true,
+                data: {
+                    token,
+                },
+            })
+            return
+        }
 
         res.send({
-            success: true,
-            data: {
-                token,
-            },
+            success: false,
+            message: 'Wrong username or password',
         })
+    })
+
+    app.post('/register', async (req, res) => {
+        const { username = '', password = '' } = req.body
+
+        if (username.length < 3 || password.length < 6) {
+            res.send({
+                success: false,
+                message: 'Malformed credentials',
+            })
+            return
+        }
+
+        const encryptedPW = passwordUtil.encrypt(password)
+
+        usersCollection
+            .insertOne({
+                username,
+                password: encryptedPW,
+                role: 0,
+            })
+            .then((createdUser) => {
+                res.send({
+                    success: true,
+                    message: 'Successfully registered',
+                    data: { user: createdUser },
+                })
+            })
+            .catch((err) => {
+                res.send({
+                    success: false,
+                    message: 'Username already taken',
+                    data: {
+                        error: err,
+                    },
+                })
+            })
     })
 
     app.get('/', (request, response) => {
@@ -23,58 +85,69 @@ export default function defineRoutes(app, db) {
     })
 
     // CREATE user
-    app.post('/api/users/create', (req, res) => {
-        const { username } = req.body
-        const usersColl = db.collection('users')
+    app.post('/api/users/create', (req, res) =>
+        withAuth(req, res, (tokenPayload) => {
+            const { username } = req.body
+            const usersColl = db.collection('users')
 
-        usersColl
-            .insertOne({
-                username,
-            })
-            .then(() => {
-                res.send({
-                    success: true,
-                    message: null,
+            usersColl
+                .insertOne({
+                    username,
                 })
-            })
-            .catch((err) => {
-                res.send({
-                    success: false,
-                    message: 'databaseInsertError',
-                    data: {
-                        error: err,
-                    },
+                .then(() => {
+                    res.send({
+                        success: true,
+                        message: null,
+                    })
                 })
-            })
-    })
+                .catch((err) => {
+                    res.send({
+                        success: false,
+                        message: 'databaseInsertError',
+                        data: {
+                            error: err,
+                        },
+                    })
+                })
+        })
+    )
 
     // READ users
-    app.get('/api/users', (req, res) => {
-        const usersColl = db.collection('users')
+    app.get('/api/users', (req, res) =>
+        withAuth(req, res, (tokenPayload) => {
+            const { role } = tokenPayload
 
-        usersColl
-            .find({})
-            .toArray()
-            .then((users) => {
-                res.send({
-                    success: true,
-                    message: null,
-                    data: {
-                        users,
-                    },
+            const requiredRole = 2
+
+            if (role < requiredRole) {
+                res.send({ success: false, message: 'Insufficient privileges' })
+                return
+            }
+
+            usersCollection
+                .find({})
+                .toArray()
+                .then((users) => {
+                    res.send({
+                        success: true,
+                        message: null,
+                        data: {
+                            users,
+                        },
+                    })
                 })
-            })
-            .catch((err) => {
-                console.error(err)
-                res.send({
-                    success: false,
-                    message: 'databaseError',
-                    data: {
-                        error: err,
-                    },
+                .catch((err) => {
+                    console.error(err)
+                    res.send({
+                        success: false,
+                        message: 'databaseError',
+                        data: {
+                            error: err,
+                        },
+                    })
                 })
-            })
-    })
+        })
+    )
 
     // READ user by id
     app.get('/api/users/:id', (req, res) => {
