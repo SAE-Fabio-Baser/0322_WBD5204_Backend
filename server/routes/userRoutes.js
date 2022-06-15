@@ -14,7 +14,7 @@ export default function defineUserRoutes(app, db) {
         if (username.length < 3 || password.length < 6) {
             res.send({
                 success: false,
-                message: 'No credentials',
+                message: 'No credentials or wrong username/password',
             })
             return
         }

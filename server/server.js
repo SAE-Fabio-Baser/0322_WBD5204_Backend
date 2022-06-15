@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from "cors"
 import { MongoClient } from 'mongodb'
 import chalk from 'chalk'
 
@@ -11,6 +12,7 @@ const dbName = 'saeApp'
 
 const app = express()
 app.use(express.json())
+app.use(cors())
 
 const mongoClient = new MongoClient(`mongodb+srv://sae:sae@${dbHost}`)
 
