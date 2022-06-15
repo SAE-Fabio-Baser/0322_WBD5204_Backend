@@ -1,10 +1,11 @@
 import express from 'express'
-import cors from "cors"
+import cors from 'cors'
 import { MongoClient } from 'mongodb'
 import chalk from 'chalk'
 
 import defineUserRoutes from './routes/userRoutes.js'
 import definePostRoutes from './routes/postRoutes.js'
+import defineSpotifyRoutes from './routes/spotifyRoutes.js'
 
 const PORT = 3000
 const dbHost = 'cluster0.ydwtqud.mongodb.net'
@@ -29,6 +30,7 @@ app.listen(PORT, () => {
 
             defineUserRoutes(app, db)
             definePostRoutes(app, db)
+            defineSpotifyRoutes(app, db)
         })
         .catch(console.error)
 
