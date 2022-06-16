@@ -6,7 +6,7 @@ const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin')
 
 module.exports = {
     mode: 'production',
-    entry: './src/index.js',
+    entry: './src/index.tsx',
     optimization: {
         minimizer: [
             new TerserPlugin({
@@ -20,7 +20,7 @@ module.exports = {
         ],
     },
     resolve: {
-        extensions: ['.js', '.jsx', '.css'],
+        extensions: ['.js', '.jsx', ".tsx", '.css'],
     },
     module: {
         rules: [
@@ -39,6 +39,11 @@ module.exports = {
                     },
                 },
             },
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+              },
             {
                 test: /\.s[ac]ss$/i,
                 use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],

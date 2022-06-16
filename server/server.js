@@ -8,14 +8,18 @@ import definePostRoutes from './routes/postRoutes.js'
 import defineSpotifyRoutes from './routes/spotifyRoutes.js'
 
 const PORT = 3000
-const dbHost = 'cluster0.ydwtqud.mongodb.net'
+const dbHost = 'mongo:27017/'
 const dbName = 'saeApp'
 
 const app = express()
 app.use(express.json())
 app.use(cors())
 
-const mongoClient = new MongoClient(`mongodb+srv://sae:sae@${dbHost}`)
+const mongoClient = new MongoClient(`mongodb://root:example@mongo:27017`)
+
+app.get('/', (req, res) => {
+    res.send('Fabios SAE-Express-Server')
+})
 
 app.listen(PORT, () => {
     mongoClient
