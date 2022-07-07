@@ -63,10 +63,16 @@ export default function defineUserRoutes(app, db) {
                 role: 0,
             })
             .then((createdUser) => {
+                const token = createToken({
+                    id: createdUser.insertedId,
+                    username: username,
+                    role: 0,
+                })
+
                 res.send({
                     success: true,
                     message: 'Successfully registered',
-                    data: { user: createdUser },
+                    data: { user: createdUser, token },
                 })
             })
             .catch((err) => {
